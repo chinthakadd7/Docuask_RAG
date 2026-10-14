@@ -5,3 +5,4 @@ __pycache__/
 .pytest_cache/
 data/vectorstore/*
 !data/vectorstore/.gitkeep
+scratch_check.py

@@ -20,6 +20,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 class Settings:
     gemini_api_key: str
     embedding_model: str
+    embedding_dimensions: int
     chunk_size_tokens: int
     chunk_overlap_tokens: int
     min_chunk_tokens: int
@@ -35,8 +36,9 @@ class Settings:
     @classmethod
     def from_env(cls) -> "Settings":
         settings = cls(
-            gemini_api_key=os.getenv("GEMINI_API_KEY", ""),
-            embedding_model=os.getenv("EMBEDDING_MODEL", "text-embedding-3-small"),
+            gemini_api_key=os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY", ""),
+            embedding_model=os.getenv("EMBEDDING_MODEL", "gemini-embedding-001"),
+            embedding_dimensions=int(os.getenv("EMBEDDING_DIMENSIONS", "768")),
             chunk_size_tokens=int(os.getenv("CHUNK_SIZE_TOKENS", "500")),
             chunk_overlap_tokens=int(os.getenv("CHUNK_OVERLAP_TOKENS", "75")),
             min_chunk_tokens=int(os.getenv("MIN_CHUNK_TOKENS", "30")),
