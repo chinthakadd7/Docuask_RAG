@@ -16,11 +16,11 @@ class Embedder:
         self.model = model or settings.embedding_model
         self.batch_size = batch_size or settings.embed_batch_size
         if client is None:
-            if not settings.openai_api_key:
-                raise ConfigError("OPENAI_API_KEY is not set. Add it to your .env file.")
+            if not settings.gemini_api_key:
+                raise ConfigError("GEMINI_API_KEY is not set. Add it to your .env file.")
             from openai import OpenAI
 
-            client = OpenAI(api_key=settings.openai_api_key)
+            client = OpenAI(api_key=settings.gemini_api_key)
         self._client = client
 
     def embed_texts(self, texts: list[str]) -> list[list[float]]:

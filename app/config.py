@@ -18,7 +18,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 
 @dataclass(frozen=True)
 class Settings:
-    openai_api_key: str
+    gemini_api_key: str
     embedding_model: str
     chunk_size_tokens: int
     chunk_overlap_tokens: int
@@ -35,7 +35,7 @@ class Settings:
     @classmethod
     def from_env(cls) -> "Settings":
         settings = cls(
-            openai_api_key=os.getenv("OPENAI_API_KEY", ""),
+            gemini_api_key=os.getenv("GEMINI_API_KEY", ""),
             embedding_model=os.getenv("EMBEDDING_MODEL", "text-embedding-3-small"),
             chunk_size_tokens=int(os.getenv("CHUNK_SIZE_TOKENS", "500")),
             chunk_overlap_tokens=int(os.getenv("CHUNK_OVERLAP_TOKENS", "75")),
