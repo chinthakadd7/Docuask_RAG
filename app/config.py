@@ -1,0 +1,57 @@
+"""Central settings. Every tunable value lives here, read from environment variables."""
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
+
+try:  # python-dotenv is optional: without it, real environment variables still work
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:  # pragma: no cover
+    pass
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+
+
+@dataclass(frozen=True)
+class Settings:
+    openai_api_key: str
+    embedding_model: str
+    chunk_size_tokens: int
+    chunk_overlap_tokens: int
+    min_chunk_tokens: int
+    max_file_mb: int
+    embed_batch_size: int
+    vectorstore_dir: Path
+    collection_name: str
+
+    @property
+    def max_file_bytes(self) -> int:
+        return self.max_file_mb * 1024 * 1024
+
+    @classmethod
+    def from_env(cls) -> "Settings":
+        settings = cls(
+            openai_api_key=os.getenv("OPENAI_API_KEY", ""),
+            embedding_model=os.getenv("EMBEDDING_MODEL", "text-embedding-3-small"),
+            chunk_size_tokens=int(os.getenv("CHUNK_SIZE_TOKENS", "500")),
+            chunk_overlap_tokens=int(os.getenv("CHUNK_OVERLAP_TOKENS", "75")),
+            min_chunk_tokens=int(os.getenv("MIN_CHUNK_TOKENS", "30")),
+            max_file_mb=int(os.getenv("MAX_FILE_MB", "20")),
+            embed_batch_size=int(os.getenv("EMBED_BATCH_SIZE", "100")),
+            vectorstore_dir=Path(
+                os.getenv("VECTORSTORE_DIR", str(ROOT_DIR / "data" / "vectorstore"))
+            ),
+            collection_name=os.getenv("COLLECTION_NAME", "docuask_chunks"),
+        )
+        if settings.chunk_overlap_tokens >= settings.chunk_size_tokens:
+            raise ValueError("CHUNK_OVERLAP_TOKENS must be smaller than CHUNK_SIZE_TOKENS")
+        return settings
+
+
+@lru_cache(maxsize=1)
+def get_settings() -> Settings:
+    return Settings.from_env()
