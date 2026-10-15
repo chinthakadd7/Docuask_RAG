@@ -1,0 +1,57 @@
+[
+  {
+    "question": "What types of information in PDFs make question answering challenging?",
+    "file": "2506.18027v3.pdf",
+    "page": 1
+  },
+  {
+    "question": "What problem does Retrieval-Augmented Generation help address?",
+    "file": "2506.18027v3.pdf",
+    "page": 2
+  },
+  {
+    "question": "How large are the document chunks used for embedding and storage?",
+    "file": "2506.18027v3.pdf",
+    "page": 3
+  },
+  {
+    "question": "Why does the system remove headers and footers from PDF documents?",
+    "file": "2506.18027v3.pdf",
+    "page": 4
+  },
+  {
+    "question": "What clustering algorithm is used to identify headers and footers?",
+    "file": "2506.18027v3.pdf",
+    "page": 5
+  },
+  {
+    "question": "Approximately how many question-answer pairs were generated for fine-tuning?",
+    "file": "2506.18027v3.pdf",
+    "page": 6
+  },
+  {
+    "question": "How many test questions were used to compare the proposed system with the baseline?",
+    "file": "2506.18027v3.pdf",
+    "page": 7
+  },
+  {
+    "question": "What were the image and table retrieval accuracy results for the PIER-QA system?",
+    "file": "2506.18027v3.pdf",
+    "page": 8
+  },
+  {
+    "question": "How is the DBSCAN min_samples value selected for documents with more than eight pages?",
+    "file": "2506.18027v3.pdf",
+    "page": 12
+  },
+  {
+    "question": "What OCR engine is used by default in the PDF processing configuration?",
+    "file": "2506.18027v3.pdf",
+    "page": 13
+  },
+  {
+    "question": "What is the capital of Australia?",
+    "file": null,
+    "page": null
+  }
+]

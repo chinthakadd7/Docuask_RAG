@@ -26,6 +26,8 @@ class Settings:
     min_chunk_tokens: int
     max_file_mb: int
     embed_batch_size: int
+    top_k: int
+    min_similarity: float
     vectorstore_dir: Path
     collection_name: str
 
@@ -44,6 +46,8 @@ class Settings:
             min_chunk_tokens=int(os.getenv("MIN_CHUNK_TOKENS", "30")),
             max_file_mb=int(os.getenv("MAX_FILE_MB", "20")),
             embed_batch_size=int(os.getenv("EMBED_BATCH_SIZE", "100")),
+            top_k=int(os.getenv("TOP_K", "5")),
+            min_similarity=float(os.getenv("MIN_SIMILARITY", "0.59")),
             vectorstore_dir=Path(
                 os.getenv("VECTORSTORE_DIR", str(ROOT_DIR / "data" / "vectorstore"))
             ),
@@ -51,6 +55,10 @@ class Settings:
         )
         if settings.chunk_overlap_tokens >= settings.chunk_size_tokens:
             raise ValueError("CHUNK_OVERLAP_TOKENS must be smaller than CHUNK_SIZE_TOKENS")
+        if settings.top_k < 1:
+            raise ValueError("TOP_K must be at least 1")
+        if not 0.0 <= settings.min_similarity <= 1.0:
+            raise ValueError("MIN_SIMILARITY must be between 0 and 1")
         return settings
 
 

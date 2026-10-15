@@ -27,3 +27,7 @@ class NoExtractableTextError(DocuAskError):
 
 class EmbeddingError(DocuAskError):
     """The embedding API failed, even after a retry."""
+
+
+class EmptyQuestionError(DocuAskError):
+    """The question was empty."""

@@ -6,3 +6,4 @@ __pycache__/
 data/vectorstore/*
 !data/vectorstore/.gitkeep
 scratch_check.py
+check_random_chunks.py

@@ -1,10 +1,25 @@
-"""Vector database wrapper (Chroma). Search is added in the retrieval step."""
+"""Vector database wrapper (Chroma): add, search, list, delete."""
 from __future__ import annotations
+
+from dataclasses import dataclass
 
 from app.config import get_settings
 from app.ingestion.chunker import Chunk
 
 _WRITE_BATCH = 500
+
+
+@dataclass(frozen=True)
+class Hit:
+    """One search result: a chunk plus how similar it is to the question."""
+
+    chunk_id: str
+    doc_id: str
+    file_name: str
+    page_number: int
+    chunk_index: int
+    text: str
+    score: float  # cosine similarity: closer to 1.0 = more similar
 
 
 class VectorStore:
@@ -34,6 +49,49 @@ class VectorStore:
                 documents=[c.text for c in batch],
                 metadatas=[c.metadata() for c in batch],
             )
+
+    def search(
+        self,
+        embedding: list[float],
+        top_k: int = 5,
+        doc_ids: list[str] | None = None,
+    ) -> list[Hit]:
+        """Return up to `top_k` most similar chunks, best first.
+
+        Chroma returns cosine *distance* (0 = identical), so score = 1 - distance.
+        Pass `doc_ids` to search only inside some documents.
+        """
+        total = self._collection.count()
+        if total == 0 or top_k < 1:
+            return []
+
+        where = {"doc_id": {"$in": doc_ids}} if doc_ids else None
+        result = self._collection.query(
+            query_embeddings=[embedding],
+            n_results=min(top_k, total),
+            where=where,
+            include=["documents", "metadatas", "distances"],
+        )
+
+        hits: list[Hit] = []
+        for chunk_id, text, meta, distance in zip(
+            result["ids"][0],
+            result["documents"][0],
+            result["metadatas"][0],
+            result["distances"][0],
+        ):
+            hits.append(
+                Hit(
+                    chunk_id=chunk_id,
+                    doc_id=meta["doc_id"],
+                    file_name=meta["file_name"],
+                    page_number=meta["page_number"],
+                    chunk_index=meta["chunk_index"],
+                    text=text,
+                    score=1.0 - distance,
+                )
+            )
+        return hits
 
     def list_documents(self) -> list[dict]:
         data = self._collection.get(include=["metadatas"])
