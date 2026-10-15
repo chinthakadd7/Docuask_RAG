@@ -11,6 +11,7 @@ import time
 
 from app.config import get_settings
 from app.exceptions import ConfigError, EmbeddingError
+from app.utils.retry import retry_delay
 
 logger = logging.getLogger(__name__)
 
@@ -74,5 +75,5 @@ class Embedder:
                 last_error = exc
                 logger.warning("Embedding attempt %d/%d failed: %s", attempt, _ATTEMPTS, exc)
                 if attempt < _ATTEMPTS:
-                    time.sleep(2.0 * attempt)  # 2s, then 4s
+                    time.sleep(retry_delay(exc, attempt))
         raise EmbeddingError("The embedding service failed. Please try again.") from last_error

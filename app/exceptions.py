@@ -31,3 +31,7 @@ class EmbeddingError(DocuAskError):
 
 class EmptyQuestionError(DocuAskError):
     """The question was empty."""
+
+
+class GenerationError(DocuAskError):
+    """The language model failed to produce an answer, even after retries."""
