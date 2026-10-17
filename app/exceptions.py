@@ -35,3 +35,11 @@ class EmptyQuestionError(DocuAskError):
 
 class GenerationError(DocuAskError):
     """The language model failed to produce an answer, even after retries."""
+
+
+class QuotaExceededError(DocuAskError):
+    """The daily free quota is used up. Retrying now will not help."""
+
+
+class DocumentNotFoundError(DocuAskError):
+    """No document with that ID exists."""
