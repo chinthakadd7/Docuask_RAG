@@ -11,8 +11,9 @@ from functools import lru_cache
 
 from fastapi import Depends, FastAPI, File, Request, Response, UploadFile
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
-from app.config import get_settings
+from app.config import ROOT_DIR, get_settings
 from app.errors import http_status_for, public_message
 from app.exceptions import DocumentNotFoundError, DocuAskError
 from app.generation.answerer import Answer, answer_question
@@ -23,6 +24,7 @@ from app.retrieval.store import VectorStore
 from app.schemas import (
     AskRequest,
     AskResponse,
+    ConfigResponse,
     DeleteResponse,
     DocumentOut,
     ErrorResponse,
@@ -91,6 +93,12 @@ def health() -> HealthResponse:
     return HealthResponse(status="ok")
 
 
+@app.get("/config", response_model=ConfigResponse, tags=["system"])
+def read_config() -> ConfigResponse:
+    """Settings the web page needs to show (for example the upload size limit)."""
+    return ConfigResponse(max_file_mb=get_settings().max_file_mb)
+
+
 @app.post(
     "/documents",
     response_model=UploadResponse,
@@ -145,6 +153,7 @@ def _to_ask_response(answer: Answer) -> AskResponse:
                 page_number=s.page_number,
                 text=s.text,
                 score=round(s.score, 4),
+                chunk_index=s.chunk_index,
             )
             for s in answer.sources
         ],
@@ -174,3 +183,11 @@ def ask(
 
     answer = answer_question(body.question, doc_ids=doc_ids, retrieve_fn=retrieve_fn)
     return _to_ask_response(answer)
+
+
+# ---- Web UI ----
+# Serve the built React app (run `npm run build` in ui/web). This must stay LAST, so the
+# API routes above are matched first and "/" only catches what is left.
+WEB_DIR = ROOT_DIR / "ui" / "web" / "dist"
+if WEB_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")

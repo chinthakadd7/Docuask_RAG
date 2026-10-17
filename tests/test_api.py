@@ -20,6 +20,9 @@ class FakeStore:
     def __init__(self):
         self.docs = {"d1": {"doc_id": "d1", "file_name": "a.pdf", "chunks": 3}}
 
+    def has_document(self, doc_id):
+        return doc_id in self.docs
+
     def list_documents(self):
         return list(self.docs.values())
 
@@ -89,7 +92,7 @@ def test_ask_returns_answer_and_sources(client, monkeypatch):
     body = r.json()
     assert r.status_code == 200 and body["found"] is True
     assert body["sources"][0] == {"number": 1, "file_name": "a.pdf", "page_number": 14,
-                                  "text": "excerpt", "score": 0.8123}
+                                  "text": "excerpt", "score": 0.8123, "chunk_index": 0}
 
 
 def test_empty_question_is_rejected(client):
@@ -102,3 +105,14 @@ def test_quota_error_gives_429(client, monkeypatch):
     monkeypatch.setattr(main, "answer_question", boom)
     r = client.post("/ask", json={"question": "Anything?"})
     assert r.status_code == 429 and "quota" in r.json()["error"]["message"].lower()
+
+
+def test_ask_with_an_unknown_doc_id_gives_404_instead_of_a_silent_not_found(client, monkeypatch):
+    monkeypatch.setattr(main, "answer_question", lambda *a, **k: Answer("x", [], True, True))
+    r = client.post("/ask", json={"question": "Anything?", "doc_ids": ["string"]})
+    assert r.status_code == 404 and "string" in r.json()["error"]["message"]
+
+
+def test_config_reports_the_upload_limit(client):
+    r = client.get("/config")
+    assert r.status_code == 200 and isinstance(r.json()["max_file_mb"], int)

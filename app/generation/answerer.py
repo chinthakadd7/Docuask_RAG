@@ -36,6 +36,7 @@ class Source:
     page_number: int
     text: str  # the full excerpt, for a "show source" view
     score: float
+    chunk_index: int = 0  # which passage on that page (0 = first)
 
 
 @dataclass(frozen=True)
@@ -108,6 +109,7 @@ def answer_question(
             page_number=hits[n - 1].page_number,
             text=hits[n - 1].text,
             score=hits[n - 1].score,
+            chunk_index=hits[n - 1].chunk_index,
         )
         for n in cited_numbers
     ]
