@@ -30,7 +30,7 @@ class FakeStore:
 
 
 def test_keeps_hits_at_or_above_threshold_in_order():
-    store = FakeStore([make_hit(0.80, 1), make_hit(0.50, 2), make_hit(0.20, 3)])
+    store = FakeStore([make_hit(0.80, 1), make_hit(0.60, 2), make_hit(0.20, 3)])
     hits = retrieve("question?", min_similarity=0.59, embedder=FakeEmbedder(), store=store)
     assert [h.page_number for h in hits] == [1, 2]
 
