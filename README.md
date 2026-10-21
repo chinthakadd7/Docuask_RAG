@@ -128,7 +128,7 @@ Set these in `.env`. Only `GEMINI_API_KEY` is required.
 | `MAX_FILE_MB` | `20` | Largest PDF accepted |
 | `EMBED_BATCH_SIZE` | `100` | Chunks embedded per API call |
 | `TOP_K` | `5` | Passages fetched per question |
-| `MIN_SIMILARITY` | `0.30` | Passages scoring below this are ignored. **Tune it** (see below) |
+| `MIN_SIMILARITY` | `0.59` | Passages scoring below this are ignored. **Tune it** (see below) |
 | `VECTORSTORE_DIR` | `data/vectorstore` | Where Chroma stores its files |
 
 > If you change `EMBEDDING_MODEL` or `EMBEDDING_DIMENSIONS`, delete `data/vectorstore/` and upload your PDFs again. Vectors of different sizes cannot be searched together.
