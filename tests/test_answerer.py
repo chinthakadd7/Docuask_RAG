@@ -65,7 +65,14 @@ def test_model_saying_not_found_gives_not_found_with_no_sources():
 
 def test_answer_without_any_citation_is_flagged():
     answer, _ = run("Leave is 20 days.", [hit(1)])
-    assert answer.found and not answer.cited and answer.sources == []
+    assert not answer.found and not answer.cited
+
+
+def test_uncited_answer_is_retried_then_rejected():
+    gen = FakeGenerator("Leave is 20 days.")
+    answer = answer_question("What?", retrieve_fn=lambda q, doc_ids=None: [hit(1)], generator=gen)
+    assert not answer.found and not answer.cited
+    assert len(gen.calls) == 2
 
 
 def test_user_message_numbers_the_excerpts_with_file_and_page():
@@ -83,24 +90,28 @@ def test_process_citations_cleans_spacing():
 
 class _Response:
     def __init__(self, text):
-        self.text = text
+        self.content = text
 
 
-class _Models:
+class _Completions:
     def __init__(self, replies):
         self.replies, self.calls = list(replies), 0
 
-    def generate_content(self, model, contents, config):
+    def create(self, messages, model, temperature, max_tokens):
         self.calls += 1
         reply = self.replies.pop(0)
         if isinstance(reply, Exception):
             raise reply
-        return _Response(reply)
+        return type(
+            "_ChatCompletion",
+            (),
+            {"choices": [type("_Choice", (), {"message": _Response(reply)})()]},
+        )()
 
 
 class _Client:
     def __init__(self, replies):
-        self.models = _Models(replies)
+        self.chat = type("_Chat", (), {"completions": _Completions(replies)})()
 
 
 @pytest.fixture(autouse=True)
@@ -111,7 +122,7 @@ def no_sleep(monkeypatch):
 def test_generator_retries_then_succeeds():
     client = _Client([RuntimeError("429"), "  Hello [1]  "])
     assert Generator(client=client, model="m", max_output_tokens=100).generate("s", "u") == "Hello [1]"
-    assert client.models.calls == 2
+    assert client.chat.completions.calls == 2
 
 
 def test_generator_gives_up_with_friendly_error_and_treats_empty_as_failure():

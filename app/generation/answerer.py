@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 # Matches [1], [12] and also lists like [1, 2]
 _CITATION = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
+_CITATION_ATTEMPTS = 2
 
 
 @dataclass(frozen=True)
@@ -96,10 +97,26 @@ def answer_question(
         return _not_found()
 
     generator = generator or _default_generator()
-    raw = generator.generate(SYSTEM_PROMPT, build_user_message(question.strip(), hits))
+    user_message = build_user_message(question.strip(), hits)
+    citation_prompt = (
+        SYSTEM_PROMPT
+        + "\n\nYou must include at least one valid excerpt citation in every answer. "
+        + "If you cannot support an answer, return the exact not-found response instead."
+    )
 
-    text, cited_numbers = process_citations(raw, max_number=len(hits))
-    if _is_not_found(text):
+    for attempt in range(_CITATION_ATTEMPTS):
+        raw = generator.generate(citation_prompt, user_message)
+        text, cited_numbers = process_citations(raw, max_number=len(hits))
+        if _is_not_found(text):
+            return _not_found()
+        if cited_numbers:
+            break
+        logger.warning(
+            "Answer had no valid citation on attempt %d/%d",
+            attempt + 1,
+            _CITATION_ATTEMPTS,
+        )
+    else:
         return _not_found()
 
     sources = [
@@ -113,8 +130,6 @@ def answer_question(
         )
         for n in cited_numbers
     ]
-    if not sources:
-        logger.warning("Answer had no valid citation: %r", text[:120])
     return Answer(text=text, sources=sources, found=True, cited=bool(sources))
 
 

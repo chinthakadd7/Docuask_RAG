@@ -61,14 +61,15 @@ flowchart LR
 |---|---|
 | Backend | Python 3.11+, FastAPI |
 | PDF parsing | PyMuPDF |
-| Embeddings and answers | Google Gemini API (`google-genai`) |
+| Embeddings | Google Gemini API (`google-genai`) |
+| Answers | Groq Cloud API (`groq`) |
 | Vector database | Chroma (local, persistent) |
 | Frontend | React + Vite, plain CSS |
 | Tests | pytest |
 
 ## Quick start
 
-**You need:** Python 3.11 or newer, Node.js 20 or newer, and a free Gemini API key from [aistudio.google.com/apikey](https://aistudio.google.com/apikey).
+**You need:** Python 3.11 or newer, Node.js 20 or newer, a free Gemini API key for embeddings, and a Groq API key for answer generation.
 
 ```bash
 # 1. Get the code
@@ -82,14 +83,14 @@ pip install -r requirements.txt
 
 # 3. Your API key
 cp .env.example .env               # Windows: copy .env.example .env
-# open .env and set GEMINI_API_KEY=your-key
+# open .env and set GEMINI_API_KEY=your-gemini-key and GROQ_API_KEY=your-groq-key
 ```
 
 **Run it for development** (two terminals):
 
 ```bash
 # Terminal 1, project root: the API
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload
 
 # Terminal 2: the web interface
 cd ui/web
@@ -106,22 +107,36 @@ cd ui/web
 npm install
 npm run build
 cd ../..
-uvicorn app.main:app
+python -m uvicorn app.main:app
 ```
 
 Open **http://localhost:8000**. FastAPI now serves the built interface and the API together.
 
+> **Windows Application Control:** If Windows blocks `uvicorn.exe`, do not run the
+> `uvicorn` executable directly. Run it through the Python interpreter in the
+> virtual environment instead:
+>
+> ```powershell
+> .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
+> ```
+>
+> For a non-development run, omit `--reload`. If PowerShell allows activation,
+> you can also run `.\.venv\Scripts\Activate.ps1` first and then use
+> `python -m uvicorn ...`. If the Python executable itself is blocked, contact
+> your system administrator rather than disabling the organization's security policy.
+
 ## Configuration
 
-Set these in `.env`. Only `GEMINI_API_KEY` is required.
+Set these in `.env`. `GEMINI_API_KEY` is required for embeddings and `GROQ_API_KEY` is required for answer generation.
 
 | Variable | Default | What it does |
 |---|---|---|
-| `GEMINI_API_KEY` | none | Your Gemini API key |
-| `GENERATION_MODEL` | `gemini-3.8-flash` | Model that writes answers |
+| `GEMINI_API_KEY` | none | Your Gemini API key for embeddings |
+| `GROQ_API_KEY` | none | Your Groq API key for answer generation |
+| `GENERATION_MODEL` | `openai/gpt-oss-120b` | Groq model that writes answers |
 | `EMBEDDING_MODEL` | `gemini-embedding-001` | Model that embeds text |
 | `EMBEDDING_DIMENSIONS` | `768` | Size of each embedding vector |
-| `MAX_OUTPUT_TOKENS` | `8192` | Output limit per answer (includes the model's thinking) |
+| `MAX_OUTPUT_TOKENS` | `8192` | Output limit per answer |
 | `CHUNK_SIZE_TOKENS` | `500` | Target chunk size |
 | `CHUNK_OVERLAP_TOKENS` | `75` | Overlap between neighbouring chunks |
 | `MIN_CHUNK_TOKENS` | `30` | Chunks smaller than this are dropped |
@@ -243,7 +258,7 @@ docuask/
 - **Scanned PDFs are not supported.** There is no OCR, so image-only pages produce no text and the upload is rejected with a clear message.
 - **Tables and multi-column layouts** may be extracted in a messy order. Check a few citations on your own documents.
 - **Page numbers are the PDF's physical pages** (page 1 is the first page), not the numbers printed on the pages.
-- **Free API limits are small.** The free Gemini tier allows only a handful of answers per minute and a small number per day for each model. Set `GENERATION_MODEL` to another model, or enable billing, for heavier use.
+- **Free API limits are small.** Groq and Gemini impose rate limits. Set `GENERATION_MODEL` to another supported Groq model, or use a paid plan, for heavier use.
 - **Single user, no login.** All uploaded documents are shared by everyone who can reach the server. Do not deploy it publicly with private documents.
 - **Answers appear all at once.** There is no word-by-word streaming yet.
 - **Answers are only as good as retrieval.** If the right passage is not in the top results, the model cannot use it. Always check the cited source.
@@ -262,8 +277,9 @@ docuask/
 | Problem | Fix |
 |---|---|
 | `GEMINI_API_KEY is not set` | Create `.env` (not just `.env.example`) and restart uvicorn |
+| `GROQ_API_KEY is not set` | Add your Groq key to `.env` and restart uvicorn |
 | 429 on `/ask` | The daily quota for that model is used up. Wait, or set another `GENERATION_MODEL` |
-| `404 ... model is no longer available` | Google retired the model name. Set a current one in `GENERATION_MODEL` |
+| `404 ... model is no longer available` | Groq retired or does not support the model name. Set a current Groq model in `GENERATION_MODEL` |
 | Everything answers "not found" | `MIN_SIMILARITY` is too high, or no documents are uploaded. Run `python -m eval.check_retrieval` |
 | Off-topic questions get answered | `MIN_SIMILARITY` is too low. Run `python -m eval.check_retrieval` |
 | The page loads but nothing works | Make sure uvicorn is running on port 8000 |

@@ -50,7 +50,7 @@ class Settings:
             embed_batch_size=int(os.getenv("EMBED_BATCH_SIZE", "100")),
             top_k=int(os.getenv("TOP_K", "5")),
             min_similarity=float(os.getenv("MIN_SIMILARITY", "0.59")),
-            generation_model=os.getenv("GENERATION_MODEL", "gemini-3.8-flash"),
+            generation_model=os.getenv("GENERATION_MODEL", "openai/gpt-oss-120b"),
             max_output_tokens=int(os.getenv("MAX_OUTPUT_TOKENS", "8192")),
             vectorstore_dir=Path(
                 os.getenv("VECTORSTORE_DIR", str(ROOT_DIR / "data" / "vectorstore"))

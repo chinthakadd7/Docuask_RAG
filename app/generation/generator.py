@@ -1,7 +1,8 @@
-"""Thin wrapper around Gemini text generation (retries, empty-answer check)."""
+"""Thin wrapper around Groq text generation (retries, empty-answer check)."""
 from __future__ import annotations
 
 import logging
+import os
 import time
 
 from app.config import get_settings
@@ -19,27 +20,27 @@ class Generator:
         self.model = model or settings.generation_model
         self.max_output_tokens = max_output_tokens or settings.max_output_tokens
         if client is None:
-            if not settings.gemini_api_key:
-                raise ConfigError("GEMINI_API_KEY is not set. Add it to your .env file.")
-            from google import genai
+            if not os.environ.get("GROQ_API_KEY"):
+                raise ConfigError("GROQ_API_KEY is not set. Add it to your .env file.")
+            from groq import Groq
 
-            client = genai.Client(api_key=settings.gemini_api_key)
+            client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
         self._client = client
 
     def generate(self, system_prompt: str, user_message: str) -> str:
         last_error: Exception | None = None
         for attempt in range(1, _ATTEMPTS + 1):
             try:
-                response = self._client.models.generate_content(
+                response = self._client.chat.completions.create(
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_message},
+                    ],
                     model=self.model,
-                    contents=user_message,
-                    config={
-                        "system_instruction": system_prompt,
-                        "temperature": 0.0,  # factual and repeatable
-                        "max_output_tokens": self.max_output_tokens,
-                    },
+                    temperature=0.0,  # factual and repeatable
+                    max_tokens=self.max_output_tokens,
                 )
-                text = (response.text or "").strip()
+                text = (response.choices[0].message.content or "").strip()
                 if not text:
                     raise ValueError("The model returned an empty answer")
                 return text
