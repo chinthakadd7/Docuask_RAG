@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: docuask
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: ENABLE_DOCS
+        value: "false"
+      - key: MAX_FILE_MB
+        value: "10"
+      - key: MAX_PAGES
+        value: "100"
+      - key: MIN_SIMILARITY
+        value: "0.59"

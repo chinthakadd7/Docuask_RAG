@@ -112,6 +112,33 @@ python -m uvicorn app.main:app
 
 Open **http://localhost:8000**. FastAPI now serves the built interface and the API together.
 
+## CI/CD with GitHub and Render
+
+This repository includes a GitHub Actions workflow at `.github/workflows/ci.yml`.
+Pull requests and pushes to `main` run the Python test suite plus the frontend
+lint and production build. Render is configured by `render.yaml` and deploys the
+Docker image only after the CI checks pass.
+
+To connect the repository:
+
+1. Push the repository to GitHub, including `Dockerfile`, `.dockerignore`,
+   `render.yaml`, and `.github/workflows/ci.yml`.
+2. In Render, choose **New > Blueprint**, connect the GitHub repository, and
+   select the `render.yaml` file.
+3. Enter `GEMINI_API_KEY`, `GROQ_API_KEY`, and a random `ACCESS_CODE` of at least
+   16 characters when Render prompts for secret values. Never commit these
+   values to GitHub.
+4. Keep `REQUIRE_ACCESS_CODE=true`. Render health checks `/health`; this endpoint
+   remains available without the access code.
+5. After the first deployment, enable branch protection for `main` in GitHub and
+   require the `CI` checks before merging pull requests.
+
+The default Render free service has ephemeral storage. Uploaded documents and
+their vector store can be lost when the service restarts or redeploys. Use a
+Render persistent disk (on a plan that supports it), an external object store,
+or a database-backed vector store before using this deployment for important
+documents.
+
 > **Windows Application Control:** If Windows blocks `uvicorn.exe`, do not run the
 > `uvicorn` executable directly. Run it through the Python interpreter in the
 > virtual environment instead:
